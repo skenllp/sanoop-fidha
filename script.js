@@ -337,7 +337,7 @@ if (wishForm) {
 
     // Build WhatsApp deep-link with pre-filled message
     const text = `💌 *Wedding Wish for Sanoop & Fidha*\n\n*From:* ${name}\n\n*Message:*\n${msg}`;
-    const url  = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
+    const url  = `https://wa.me/${919562327585}?text=${encodeURIComponent(text)}`;
 
     // Open WhatsApp in a new tab
     window.open(url, '_blank', 'noopener,noreferrer');
