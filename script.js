@@ -210,93 +210,84 @@ const btnNo = document.getElementById('btnNo');
 const attendanceInput = document.getElementById('attendanceInput');
 
 function setAttendance(value) {
-  attendanceInput.value = value;
+  if (attendanceInput) attendanceInput.value = value;
 
   if (value === 'yes') {
-    btnYes.classList.add('active');
-    btnYes.setAttribute('aria-pressed', 'true');
-    btnNo.classList.remove('active');
-    btnNo.setAttribute('aria-pressed', 'false');
+    if (btnYes) { btnYes.classList.add('active'); btnYes.setAttribute('aria-pressed', 'true'); }
+    if (btnNo)  { btnNo.classList.remove('active'); btnNo.setAttribute('aria-pressed', 'false'); }
   } else {
-    btnNo.classList.add('active');
-    btnNo.setAttribute('aria-pressed', 'true');
-    btnYes.classList.remove('active');
-    btnYes.setAttribute('aria-pressed', 'false');
+    if (btnNo)  { btnNo.classList.add('active'); btnNo.setAttribute('aria-pressed', 'true'); }
+    if (btnYes) { btnYes.classList.remove('active'); btnYes.setAttribute('aria-pressed', 'false'); }
   }
 }
 
-btnYes.addEventListener('click', () => setAttendance('yes'));
-btnNo.addEventListener('click', () => setAttendance('no'));
+if (btnYes) btnYes.addEventListener('click', () => setAttendance('yes'));
+if (btnNo)  btnNo.addEventListener('click',  () => setAttendance('no'));
 
 // ============================================================
-// RSVP â€” Form Submit â†’ Google Sheets via Apps Script
+// RSVP — Form Submit — Google Sheets via Apps Script
 // ============================================================
 
-// ðŸ”‘ Paste your Google Apps Script Web App URL here after deploying
 const APPS_SCRIPT_URL = '';
-
-const rsvpForm = document.getElementById('rsvpForm');
+const rsvpForm    = document.getElementById('rsvpForm');
 const rsvpSuccess = document.getElementById('rsvpSuccess');
-const submitBtn = rsvpForm.querySelector('.rsvp-submit');
 
-rsvpForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
+if (rsvpForm) {
+  const submitBtn = rsvpForm.querySelector('.rsvp-submit');
 
-  const nameField = document.getElementById('rsvpName');
+  rsvpForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-  // Basic validation
-  if (!nameField.value.trim()) {
-    nameField.focus();
-    nameField.style.borderColor = '#6E473B';
-    nameField.style.boxShadow = '0 0 0 3px rgba(110,71,59,0.18)';
-    setTimeout(() => {
-      nameField.style.borderColor = '';
-      nameField.style.boxShadow = '';
-    }, 2200);
-    return;
-  }
+    const nameField = document.getElementById('rsvpName');
 
-  // Collect data
-  const payload = {
-    attendance: attendanceInput.value,
-    name: document.getElementById('rsvpName').value.trim(),
-    mobile: document.getElementById('rsvpMobile').value.trim(),
-    guests: document.getElementById('rsvpGuests').value,
-    message: document.getElementById('rsvpMessage').value.trim(),
-  };
+    // Basic validation
+    if (!nameField.value.trim()) {
+      nameField.focus();
+      nameField.style.borderColor = '#6E473B';
+      nameField.style.boxShadow = '0 0 0 3px rgba(110,71,59,0.18)';
+      setTimeout(() => {
+        nameField.style.borderColor = '';
+        nameField.style.boxShadow = '';
+      }, 2200);
+      return;
+    }
 
-  // Disable button and show loading state
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Sendingâ€¦';
+    // Collect data
+    const payload = {
+      attendance: attendanceInput ? attendanceInput.value : '',
+      name: document.getElementById('rsvpName').value.trim(),
+      mobile: document.getElementById('rsvpMobile').value.trim(),
+      guests: document.getElementById('rsvpGuests').value,
+      message: document.getElementById('rsvpMessage').value.trim(),
+    };
 
-  try {
-    // Google Apps Script requires no-cors mode for cross-origin POST
-    await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+    // Disable button and show loading state
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending…';
 
-    // no-cors gives opaque response â€” treat reaching here as success
-    showSuccess();
-
-  } catch (err) {
-    // Network failure fallback â€” save to localStorage so no data is lost
     try {
-      const existing = JSON.parse(localStorage.getItem('rsvp_responses') || '[]');
-      existing.push({ ...payload, savedOffline: true, timestamp: new Date().toISOString() });
-      localStorage.setItem('rsvp_responses', JSON.stringify(existing));
-    } catch (_) { /* ignore */ }
+      await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      showRsvpSuccess();
+    } catch (err) {
+      try {
+        const existing = JSON.parse(localStorage.getItem('rsvp_responses') || '[]');
+        existing.push({ ...payload, savedOffline: true, timestamp: new Date().toISOString() });
+        localStorage.setItem('rsvp_responses', JSON.stringify(existing));
+      } catch (_) { /* ignore */ }
+      showRsvpSuccess();
+      console.warn('RSVP saved offline (network error):', err);
+    }
+  });
+}
 
-    showSuccess(); // still show success to user
-    console.warn('RSVP saved offline (network error):', err);
-  }
-});
-
-function showSuccess() {
-  rsvpForm.hidden = true;
-  rsvpSuccess.hidden = false;
+function showRsvpSuccess() {
+  if (rsvpForm)    rsvpForm.hidden    = true;
+  if (rsvpSuccess) rsvpSuccess.hidden = false;
 }
 
 // ============================================================
@@ -336,11 +327,10 @@ if (wishForm) {
     if (!valid) { nameEl.focus(); return; }
 
     // Build WhatsApp deep-link with pre-filled message
-    const text = `💌 *Wedding Wish for Sanoop & Fidha*\n\n*From:* ${name}\n\n*Message:*\n${msg}`;
+    const text = `*Wedding Wish for Sanoop & Fidha*\n\n*From:* ${name}\n\n*Message:*\n${msg}`;
     const url  = `https://wa.me/${919562327585}?text=${encodeURIComponent(text)}`;
 
-    // Open WhatsApp in a new tab
-    window.open(url, '_blank', 'noopener,noreferrer');
+    window.location.href = url;
 
     // Show success state
     wishForm.hidden    = true;
