@@ -186,7 +186,7 @@ bgMusic.addEventListener('play', () => syncMusicBtn(true));
 // REVEAL ON SCROLL
 // ============================================================
 const revealTargets = document.querySelectorAll(
-  '.occasion-card, .countdown-grid, .venue-card, .rsvp-card, .section-title, .section-eyebrow, .invite-note p, .couples-img-container'
+  '.occasion-card, .countdown-grid, .venue-card, .rsvp-card, .section-title, .section-eyebrow, .invite-note p, .couples-img-container, .wish-card'
 );
 
 revealTargets.forEach(el => el.classList.add('reveal'));
@@ -297,5 +297,63 @@ rsvpForm.addEventListener('submit', async (e) => {
 function showSuccess() {
   rsvpForm.hidden = true;
   rsvpSuccess.hidden = false;
+}
+
+// ============================================================
+// WISHING BOX — sends message to WhatsApp
+// ============================================================
+
+// 📱 Change this to the target WhatsApp number (international format, no + or spaces)
+// Example: India +91 98765 43210  →  919876543210
+const WHATSAPP_NUMBER = '919562327585'; // +91 95623 27585
+
+const wishForm     = document.getElementById('wishForm');
+const wishSuccess  = document.getElementById('wishSuccess');
+const wishAgainBtn = document.getElementById('wishAgainBtn');
+
+if (wishForm) {
+  wishForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const nameEl = document.getElementById('wishName');
+    const msgEl  = document.getElementById('wishMessage');
+    const name   = nameEl.value.trim();
+    const msg    = msgEl.value.trim();
+
+    // Basic validation — highlight empty fields
+    let valid = true;
+    [nameEl, msgEl].forEach(el => {
+      if (!el.value.trim()) {
+        el.style.borderColor  = 'var(--gold)';
+        el.style.boxShadow    = '0 0 0 3px rgba(200,57,58,0.20)';
+        setTimeout(() => {
+          el.style.borderColor = '';
+          el.style.boxShadow   = '';
+        }, 2200);
+        valid = false;
+      }
+    });
+    if (!valid) { nameEl.focus(); return; }
+
+    // Build WhatsApp deep-link with pre-filled message
+    const text = `💌 *Wedding Wish for Sanoop & Fidha*\n\n*From:* ${name}\n\n*Message:*\n${msg}`;
+    const url  = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
+
+    // Open WhatsApp in a new tab
+    window.open(url, '_blank', 'noopener,noreferrer');
+
+    // Show success state
+    wishForm.hidden    = true;
+    wishSuccess.hidden = false;
+  });
+}
+
+if (wishAgainBtn) {
+  wishAgainBtn.addEventListener('click', () => {
+    document.getElementById('wishName').value    = '';
+    document.getElementById('wishMessage').value = '';
+    wishSuccess.hidden = true;
+    wishForm.hidden    = false;
+  });
 }
 
